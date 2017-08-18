@@ -1,0 +1,16 @@
+<launch>
+
+  <!-- robot localization and navigation -->
+  <include file="$(find fetch_navigation)/launch/fetch_nav.launch">
+    <arg name="map_file" value="$(find data_collector)/maps/map.yaml"/>
+    <arg name="map_keepout_file" value="$(find data_collector)/maps/keepout_map.yaml"/>
+    <arg name="use_keepout" value="true" />
+  </include>
+
+  <!-- static point publisher -->
+  <node pkg="data_collector" type="static_point_publisher.py" name="static_point_publisher"/>
+ 
+  <!-- keyboard monitor -->
+  <node pkg="data_collector" type="keyboard_monitor.py" name="keyboard_monitor" />
+
+</launch>
