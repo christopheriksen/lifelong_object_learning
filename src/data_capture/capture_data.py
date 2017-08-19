@@ -8,9 +8,12 @@ from cv_bridge import CvBridge, CvBridgeError
 from move_base_msgs.msg import MoveBaseGoal
 from move_base_msgs.msg import MoveBaseAction
 # from pr2_controllers_msgs.msg import PointHeadAction, PointHeadGoal, SingleJointPositionAction, SingleJointPositionGoal
+from control_msgs.msg import PointHeadAction, PointHeadGoal, SingleJointPositionAction, SingleJointPositionGoal
 from geometry_msgs.msg import PointStamped, PoseWithCovarianceStamped, Quaternion
 import actionlib
 from actionlib_msgs.msg import GoalStatus
+from moveit_msgs.msg import MoveItErrorCodes
+from moveit_python import MoveGroupInterface, PlanningSceneInterface
 from image_geometry import PinholeCameraModel
 import cv2
 import math
@@ -55,11 +58,13 @@ class Node:
         # self.spine_offset = spine_offset
 
         # # head movement
-        # self.point_head_client = actionlib.SimpleActionClient(head_movement_topic, PointHeadAction)
+        self.point_head_client = actionlib.SimpleActionClient(head_movement_topic, PointHeadGoal)
         # self.point_head_client.wait_for_server()
 
         # keyboard listener
         self.keypress_sub = rospy.Subscriber('/key_monitor', String, self.key_callback)
+
+        self.move_group = MoveGroupInterface("arm_with_torso", "base_link")
 
     def robot_pose_callback(self, data):
         self.robot_pose = data
@@ -94,22 +99,28 @@ class Node:
     #     goal.position = pose
     #     self.torso_client.send_goal(goal)
 
+    def move_torso(self, pose):
+        self.move_group.moveToJointPosition(["torso_lift_joint"], [pose], wait=False)   # plan
+        self.move_group.get_move_action().wait_for_result()
+        result = self.move_group.get_move_action().get_result()
+        return result
 
-    # def look_at(self, frame_id, x, y, z):
-    #     goal = PointHeadGoal()
-    #     goal.target.header.stamp = rospy.Time.now()
-    #     goal.target.header.frame_id = frame_id
-    #     goal.target.point.x = x
-    #     goal.target.point.y = y
-    #     goal.target.point.z = z
 
-    #     goal.pointing_frame = "pointing_frame"
-    #     goal.pointing_axis.x = 1
-    #     goal.pointing_axis.y = 0
-    #     goal.pointing_axis.z = 0
+    def look_at(self, frame_id, x, y, z):
+        goal = PointHeadGoal()
+        goal.target.header.stamp = rospy.Time.now()
+        goal.target.header.frame_id = frame_id
+        goal.target.point.x = x
+        goal.target.point.y = y
+        goal.target.point.z = z
 
-    #     # send goal
-    #     self.point_head_client.send_goal(goal)
+        goal.pointing_frame = "pointing_frame"
+        goal.pointing_axis.x = 1
+        goal.pointing_axis.y = 0
+        goal.pointing_axis.z = 0
+
+        # send goal
+        self.point_head_client.send_goal(goal)
 
 
     # def pc_callback(self, data):
@@ -158,6 +169,26 @@ class Node:
 def euclidian_dist(point_1, point_2):
     return math.sqrt((point_1[0] - point_2[0])**2 + (point_1[1] - point_2[1])**2 + (point_1[2] - point_2[2])**2)
 
+def sample_position(x_center, sample_max_radius, sample_min_radius):
+    min_x = x_center - sample_max_radius
+    max_x = x_center - sample_min_radius*math.sin(.1745)
+
+    sampled_theta = random.random()*(2*math.pi)
+    sampled_r = random.random()*(sample_max_radius - sample_min_radius) + sample_min_radius
+    sampled_x = sampled_r*math.cos(sampled_theta)
+    sampled_y = sampled_r*math.sin(sampled_theta)
+    sampled_z = random.random()*(node.max_spine_height - node.min_spine_height) + node.min_spine_height
+
+    angle = math.atan2(x_center - sampled_x, y_center - sampled_y)
+    if angle > math.pi*2:
+        angle = angle - math.pi*2
+    if angle < 0:
+        angle = angle + math.pi*2
+
+    position = [sampled_x, sampled_y, angle, sampled_z]
+
+    return position
+
 
 def main():
 
@@ -179,8 +210,8 @@ def main():
     ar_tag_frame = "/april_tag_0"
     published_point_num_topic = "/object_point_num"
     published_point_base_topic = "/object_point"
-    torso_movement_topic = "/torso_controller/position_joint_action"
-    head_movement_topic = "/head_traj_controller/point_head_action"
+    torso_movement_topic = "/torso_controller/follow_joint_trajectory"
+    head_movement_topic = "/head_controller/point_head"
     image_filepath = "/home/eriksenc/data_gatherer/src/data_collector/data/images/"
     image_data_filepath = "/home/eriksenc/data_gatherer/src/data_collector/data/metadata/"
     ar_tag_size = .142
@@ -194,6 +225,7 @@ def main():
     min_spine_height = 0.0
     spine_offset = 0.0
     starting_image_index = 0
+    desired_num_images = 100
 
 
     node = Node(image_topic, camera_info_topic, camera_frame, published_point_num_topic, published_point_base_topic, torso_movement_topic, head_movement_topic, num_published_points,
@@ -242,50 +274,15 @@ def main():
     # rospy.loginfo("AR frame transformed to map frame")
 
     # sample positions around center of object
-    positions = []
-    min_x = x_center - sample_max_radius
-    max_x = x_center - sample_min_radius*math.sin(.1745)
-    for i in range(num_positions_to_sample):
-       sampled_theta = random.random()*(2*math.pi)
-       sampled_r = random.random()*(sample_max_radius - sample_min_radius) + sample_min_radius
-       sampled_x = sampled_r*math.cos(sampled_theta)
-       sampled_y = sampled_r*math.sin(sampled_theta)
-       sampled_z = random.random()*(node.max_spine_height - node.min_spine_height) + node.min_spine_height
 
-       angle = math.atan2(x_center - sampled_x, y_center - sampled_y)
-       if angle > math.pi*2:
-           angle = angle - math.pi*2
-       if angle < 0:
-           angle = angle + math.pi*2
 
        # radius = math.sqrt((sampled_x - x_center)**2 + (sampled_y - y_center)**2)
 
-    # positions_file_path = "/home/eriksenc/data_gatherer/src/data_collector/data/"
-    # positions_file_name = "optimizer_result_4.txt"
-    # lines = [line.rstrip('\n') for line in open(positions_file_path + positions_file_name)]
-    # for line in lines:
-    #     #print line
-    #     elems = line.split()
-
-    #     #print elems[0]
-    #     #print elems[1]
-
-    #     sampled_x = float(elems[0])
-    #     sampled_y = float(elems[1])
-    #     sampled_z = 0.0
-    #     x_diff = sampled_x - x_center
-    #     y_diff = sampled_y - y_center
-    #     theta = math.atan2(y_diff, x_diff) + math.pi
-    #     if theta > (2*math.pi):
-    #         theta = theta - (2*math.pi)
-    #     if theta < 0:
-    #         theta = theta + (2*math.pi)
-
-    #     positions.append([sampled_x, sampled_y, theta, sampled_z])
 
 
     # send first goal
     goalID = 0
+    num_images_caputred = 0
     numGoals = len(positions)
     position = positions[goalID]
     goal_x = position[0]
@@ -327,103 +324,106 @@ def main():
         if (node.base_client.get_state() == g_status.SUCCEEDED):
 
             # # adjust spine height
-            # position = positions[goalID]
-            # spine_height = position[3]
+            position = positions[goalID]
+            spine_height = position[3]
 
-            # node.move_torso(spine_height)
+            result = node.move_torso(spine_height)
             # result = node.torso_client.wait_for_result()
-            # rospy.loginfo("Adjusting spine")
-            # if result == g_status.SUCCEEDED:
+            rospy.loginfo("Adjusting spine")
+            if result:
+                if result.error_code.val == MoveItErrorCodes.SUCCESS:
 
-            # # make robot look at object
-            # rospy.loginfo("Turning head")
-            # node.look_at("/map", x_center, y_center, z_center)
-            # result = node.point_head_client.wait_for_result()
+                    rospy.loginfo("Spine adjustment succeeded")
 
-            # if result == g_status.SUCCEEDED:
+                    # make robot look at object
+                    rospy.loginfo("Turning head")
+                    node.look_at("/map", x_center, y_center, z_center)
+                    result = node.point_head_client.wait_for_result()
 
-            #     rospy.loginfo("Head turn succeeded")
+                    if result == g_status.SUCCEEDED:
 
-            if True:
+                        rospy.loginfo("Head turn succeeded")
 
-                rospy.loginfo("Sitting still")
-                # rospy.sleep(2.0)
+                    # if True:
 
-                # capture and save image
-                img_cur = node.get_img()
-                if (img_cur is not None) and (len(node.points_registered) == node.num_published_points):
+                        # rospy.loginfo("Sitting still")
+                        # rospy.sleep(2.0)
 
-                    rospy.loginfo("Capturing image")
+                        # capture and save image
+                        img_cur = node.get_img()
+                        if (img_cur is not None) and (len(node.points_registered) == node.num_published_points):
 
-                    # find pixel coordinates of points of interest
-                    # tl, tr, bl, br
-                    # ref_points = [[-ar_tag_size/2.0,-ar_tag_size/2.0,0], [-ar_tag_size/2.0,ar_tag_size/2.0,0], [ar_tag_size/2.0,-ar_tag_size/2.0,0], [ar_tag_size/2.0,ar_tag_size/2.0,0]]
-                    ref_points = [node.published_points]
+                            rospy.loginfo("Capturing image")
 
-                    height, width, channels = img_cur.shape
+                            # find pixel coordinates of points of interest
+                            # tl, tr, bl, br
+                            # ref_points = [[-ar_tag_size/2.0,-ar_tag_size/2.0,0], [-ar_tag_size/2.0,ar_tag_size/2.0,0], [ar_tag_size/2.0,-ar_tag_size/2.0,0], [ar_tag_size/2.0,ar_tag_size/2.0,0]]
+                            ref_points = [node.published_points]
 
-                    ref_points_camera_frame = []
-                    points_to_write = []
-                    for ref_point in ref_points:
-                        ps = PointStamped()
-                        ps.header.stamp = node.tf.getLatestCommonTime(camera_frame, map_frame)
-                        # ps.header.stamp = rospy.Time.now()
-                        ps.header.frame_id = ar_tag_frame
-                        ps.point.x = ref_point[0]
-                        ps.point.y = ref_point[1]
-                        ps.point.z = ref_point[2]
+                            height, width, channels = img_cur.shape
 
-                        ps_new = node.tf.transformPoint(camera_frame, ps)
-                        # ref_points_camera_frame.append([ps_new.point.x, ps_new.point.y, ps_new.point.z])
+                            ref_points_camera_frame = []
+                            points_to_write = []
+                            for ref_point in ref_points:
+                                ps = PointStamped()
+                                ps.header.stamp = node.tf.getLatestCommonTime(camera_frame, map_frame)
+                                # ps.header.stamp = rospy.Time.now()
+                                ps.header.frame_id = ar_tag_frame
+                                ps.point.x = ref_point[0]
+                                ps.point.y = ref_point[1]
+                                ps.point.z = ref_point[2]
 
-                        (u,v) = camera_model.project3dToPixel((ps_new.point.x, ps_new.point.y, ps_new.point.z))
-                        points_to_write.append([int(round(u)), int(round(v))])
+                                ps_new = node.tf.transformPoint(camera_frame, ps)
+                                # ref_points_camera_frame.append([ps_new.point.x, ps_new.point.y, ps_new.point.z])
 
-
-                    # points_to_write = [[0, 0, float("inf")] for i in range(len(ref_points))]
-
-                    # points = pc2.read_points(pc_cur, skip_nans=False)
-                    # index = 0
-                    # for point in points:
-                    #     x = point[0]
-                    #     y = point[1]
-                    #     z = point[2]
-                    #     index += 1
-
-                    #     row = index/pc_cur.width
-                    #     col = index - row*pc_cur.width
-
-                    #     for i in range(len(ref_points_camera_frame)):
-                    #         dist = math.sqrt((x - ref_points_camera_frame[i][0])**2 + (y - ref_points_camera_frame[i][1])**2 + (z - ref_points_camera_frame[i][2])**2)
-                    #         if dist < points_to_write[i][2]: 
-                    #             points_to_write[i][0] = col
-                    #             points_to_write[i][1] = row
-                    #             points_to_write[i][2] = dist
-
-                    # save image along with pos annotations
-                    image_file = image_filepath + str(image_file_index) + '.png'
-                    text_file = image_data_filepath + str(image_file_index) + '.txt'
-                    f = open(text_file, 'w')
-                    f.write(image_file + "\n")
-                    f.write(str(height) + "\t" + str(width) + "\n")
-                    for point in points_to_write:
-                        f.write(str(point[0]) + "\t")
-                        f.write(str(point[1]) + "\n")
-                    f.write(str(goal_x) + "\n")
-                    f.write(str(goal_y) + "\n")
-                    f.close()
+                                (u,v) = camera_model.project3dToPixel((ps_new.point.x, ps_new.point.y, ps_new.point.z))
+                                points_to_write.append([int(round(u)), int(round(v))])
 
 
+                            # points_to_write = [[0, 0, float("inf")] for i in range(len(ref_points))]
 
-                    # visualize
-                    # for point in points_to_write:
-                    #    cv2.circle(img_cur, (point[0], point[1]), 2, (0, 0, 255), 3)
+                            # points = pc2.read_points(pc_cur, skip_nans=False)
+                            # index = 0
+                            # for point in points:
+                            #     x = point[0]
+                            #     y = point[1]
+                            #     z = point[2]
+                            #     index += 1
 
-                    cv2.imwrite(image_file, img_cur)
-                    image_file_index += 1
-                    
-                    rospy.loginfo("Metadata and Image saved")
-                    rospy.loginfo("Num images captured: " + str(image_file_index))
+                            #     row = index/pc_cur.width
+                            #     col = index - row*pc_cur.width
+
+                            #     for i in range(len(ref_points_camera_frame)):
+                            #         dist = math.sqrt((x - ref_points_camera_frame[i][0])**2 + (y - ref_points_camera_frame[i][1])**2 + (z - ref_points_camera_frame[i][2])**2)
+                            #         if dist < points_to_write[i][2]: 
+                            #             points_to_write[i][0] = col
+                            #             points_to_write[i][1] = row
+                            #             points_to_write[i][2] = dist
+
+                            # save image along with pos annotations
+                            image_file = image_filepath + str(image_file_index) + '.png'
+                            text_file = image_data_filepath + str(image_file_index) + '.txt'
+                            f = open(text_file, 'w')
+                            f.write(image_file + "\n")
+                            f.write(str(height) + "\t" + str(width) + "\n")
+                            for point in points_to_write:
+                                f.write(str(point[0]) + "\t")
+                                f.write(str(point[1]) + "\n")
+                            f.write(str(goal_x) + "\n")
+                            f.write(str(goal_y) + "\n")
+                            f.close()
+
+
+
+                            # visualize
+                            # for point in points_to_write:
+                            #    cv2.circle(img_cur, (point[0], point[1]), 2, (0, 0, 255), 3)
+
+                            cv2.imwrite(image_file, img_cur)
+                            image_file_index += 1
+                            
+                            rospy.loginfo("Metadata and Image saved")
+                            rospy.loginfo("Num images captured: " + str(image_file_index))
 
 
 
