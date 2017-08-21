@@ -65,7 +65,7 @@ class Node:
         self.keypress_sub = rospy.Subscriber('/key_monitor', String, self.key_callback)
 
         rospy.loginfo("move group")
-        self.move_group = MoveGroupInterface("arm_with_torso", "base_link")
+        self.move_group = MoveGroupInterface("torso")
         rospy.loginfo("move group end")
 
     def robot_pose_callback(self, data):
