@@ -53,13 +53,13 @@ class Node:
         # # torso movement
         # self.torso_client = actionlib.SimpleActionClient(torso_movement_topic, SingleJointPositionAction)
         # self.torso_client.wait_for_server()
-        # self.max_spine_height = max_spine_height
-        # self.min_spine_height = min_spine_height
-        # self.spine_offset = spine_offset
+        self.max_spine_height = max_spine_height
+        self.min_spine_height = min_spine_height
+        self.spine_offset = spine_offset
 
         # # head movement
         self.point_head_client = actionlib.SimpleActionClient(head_movement_topic, PointHeadGoal)
-        # self.point_head_client.wait_for_server()
+        self.point_head_client.wait_for_server()
 
         # keyboard listener
         self.keypress_sub = rospy.Subscriber('/key_monitor', String, self.key_callback)

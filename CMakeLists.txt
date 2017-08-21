@@ -10,6 +10,7 @@ project(lifelong_object_learning)
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   actionlib_msgs
+  control_msgs
   cv_bridge
   geometry_msgs
   image_geometry
