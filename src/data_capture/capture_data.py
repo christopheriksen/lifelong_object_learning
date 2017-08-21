@@ -64,7 +64,9 @@ class Node:
         # keyboard listener
         self.keypress_sub = rospy.Subscriber('/key_monitor', String, self.key_callback)
 
+        rospy.loginfo("move group")
         self.move_group = MoveGroupInterface("arm_with_torso", "base_link")
+        rospy.loginfo("move group end")
 
     def robot_pose_callback(self, data):
         self.robot_pose = data
@@ -235,6 +237,7 @@ def main():
     node = Node(image_topic, camera_info_topic, camera_frame, published_point_num_topic, published_point_base_topic, torso_movement_topic, head_movement_topic, num_published_points,
         max_spine_height, min_spine_height, spine_offset)
 
+    rospy.loginfo("Got here 1")
     camera_model = PinholeCameraModel()
     while node.camera_info is None:     # wait for camera info
         continue
@@ -242,6 +245,7 @@ def main():
 
 
     while (len(node.points_registered) != node.num_published_points):
+        rospy.loginfo(str(len(node.points_registered)))
         continue
 
     # find center of object

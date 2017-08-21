@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   image_geometry
   move_base_msgs
+  moveit_msgs
+  moveit_python
   roscpp
   rospy
   sensor_msgs

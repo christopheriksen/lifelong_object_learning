@@ -62,7 +62,7 @@ def main():
             marker = Marker()
             marker.header.seq = i
             marker.header.stamp = rospy.Time.now()
-            marker.header.frame_id = ar_tag_frame
+            marker.header.frame_id = point.header.frame_id
             marker.ns = "/clicked_points/"
             marker.id = i
             marker.type = 2

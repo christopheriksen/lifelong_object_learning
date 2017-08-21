@@ -7,6 +7,9 @@
     <arg name="use_keepout" value="true" />
   </include>
 
+  <!-- move it -->
+  <include file="$(find fetch_moveit_config)/launch/move_group.launch" />
+
   <!-- static point publisher -->
   <node pkg="lifelong_object_learning" type="point_publisher.py" name="point_publisher"/>
  
