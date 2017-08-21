@@ -58,7 +58,7 @@ class Node:
         self.spine_offset = spine_offset
 
         # # head movement
-        self.point_head_client = actionlib.SimpleActionClient(head_movement_topic, PointHeadGoal)
+        self.point_head_client = actionlib.SimpleActionClient(head_movement_topic, PointHeadAction)
         self.point_head_client.wait_for_server()
 
         # keyboard listener
@@ -212,8 +212,8 @@ def main():
     published_point_base_topic = "/object_point"
     torso_movement_topic = "/torso_controller/follow_joint_trajectory"
     head_movement_topic = "/head_controller/point_head"
-    image_filepath = "/home/eriksenc/data_gatherer/src/data_collector/data/images/"
-    image_data_filepath = "/home/eriksenc/data_gatherer/src/data_collector/data/metadata/"
+    image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/images/"
+    image_data_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/metadata/"
     ar_tag_size = .142
     num_published_points = 4
     sample_min_radius = .5
@@ -221,8 +221,10 @@ def main():
     sample_height = .5
     height_offset = 1.0
     num_positions_to_sample = 50
-    max_spine_height = 2.0
-    min_spine_height = 0.0
+    max_spine_height = .386
+    min_spine_height = 0.00313
+    #max_spine_height = .184
+    #min_spine_height = 0.0
     spine_offset = 0.0
     starting_image_index = 0
     desired_num_images = 100
@@ -283,8 +285,9 @@ def main():
     # send first goal
     goalID = 0
     num_images_caputred = 0
-    numGoals = len(positions)
-    position = positions[goalID]
+    #numGoals = len(positions)
+    #position = positions[goalID]
+    position = sample_position(x_center, sample_max_radius, sample_min_radius)
     goal_x = position[0]
     goal_y = position[1]
     goal_theta = position[2]
