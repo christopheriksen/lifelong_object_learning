@@ -149,6 +149,26 @@ class Node:
         self.published_points[point_id][1] = data.point.y
         self.published_points[point_id][2] = data.point.z
 
+    def sample_position(self, x_center, y_center, sample_max_radius, sample_min_radius):
+        min_x = x_center - sample_max_radius
+        max_x = x_center - sample_min_radius*math.sin(.1745)
+
+        sampled_theta = random.random()*(2*math.pi)
+        sampled_r = random.random()*(sample_max_radius - sample_min_radius) + sample_min_radius
+        sampled_x = sampled_r*math.cos(sampled_theta)
+        sampled_y = sampled_r*math.sin(sampled_theta)
+        sampled_z = random.random()*(self.max_spine_height - self.min_spine_height) + self.min_spine_height
+
+        angle = math.atan2(x_center - sampled_x, y_center - sampled_y)
+        if angle > math.pi*2:
+            angle = angle - math.pi*2
+        if angle < 0:
+            angle = angle + math.pi*2
+
+        position = [sampled_x, sampled_y, angle, sampled_z]
+
+        return position
+
 
     def get_img(self):
         return self.img
@@ -169,25 +189,7 @@ class Node:
 def euclidian_dist(point_1, point_2):
     return math.sqrt((point_1[0] - point_2[0])**2 + (point_1[1] - point_2[1])**2 + (point_1[2] - point_2[2])**2)
 
-def sample_position(x_center, sample_max_radius, sample_min_radius):
-    min_x = x_center - sample_max_radius
-    max_x = x_center - sample_min_radius*math.sin(.1745)
 
-    sampled_theta = random.random()*(2*math.pi)
-    sampled_r = random.random()*(sample_max_radius - sample_min_radius) + sample_min_radius
-    sampled_x = sampled_r*math.cos(sampled_theta)
-    sampled_y = sampled_r*math.sin(sampled_theta)
-    sampled_z = random.random()*(node.max_spine_height - node.min_spine_height) + node.min_spine_height
-
-    angle = math.atan2(x_center - sampled_x, y_center - sampled_y)
-    if angle > math.pi*2:
-        angle = angle - math.pi*2
-    if angle < 0:
-        angle = angle + math.pi*2
-
-    position = [sampled_x, sampled_y, angle, sampled_z]
-
-    return position
 
 
 def main():
@@ -284,10 +286,10 @@ def main():
 
     # send first goal
     goalID = 0
-    num_images_caputred = 0
+    num_images_captured = 0
     #numGoals = len(positions)
     #position = positions[goalID]
-    position = sample_position(x_center, sample_max_radius, sample_min_radius)
+    position = node.sample_position(x_center, y_center, sample_max_radius, sample_min_radius)
     goal_x = position[0]
     goal_y = position[1]
     goal_theta = position[2]
@@ -305,16 +307,15 @@ def main():
         # if preempted or failed, go to next goal
         if (node.base_client.get_state() == g_status.PREEMPTED) or ((node.base_client.get_state() == g_status.ABORTED) or (node.base_client.get_state() == g_status.REJECTED)):
 
-            goalID = (goalID + 1)%numGoals
-            position = positions[goalID]
+            position = node.sample_position(x_center, y_center, sample_max_radius, sample_min_radius)
             goal_x = position[0]
             goal_y = position[1]
             goal_theta = position[2]
 
-            # exit if we have tried all positions
-            if goalID == 0:
-                rospy.loginfo("Total images captured: " + str(image_file_index))
-                return
+            # # exit if we have tried all positions
+            # if goalID == 0:
+            #     rospy.loginfo("Total images captured: " + str(image_file_index))
+            #     return
                     
             # move to next position
             rospy.loginfo("New goal ID is " + str(goalID))
@@ -327,7 +328,7 @@ def main():
         if (node.base_client.get_state() == g_status.SUCCEEDED):
 
             # # adjust spine height
-            position = positions[goalID]
+            # position = positions[goalID]
             spine_height = position[3]
 
             result = node.move_torso(spine_height)
@@ -419,8 +420,8 @@ def main():
 
 
                             # visualize
-                            # for point in points_to_write:
-                            #    cv2.circle(img_cur, (point[0], point[1]), 2, (0, 0, 255), 3)
+                            for point in points_to_write:
+                               cv2.circle(img_cur, (point[0], point[1]), 2, (0, 0, 255), 3)
 
                             cv2.imwrite(image_file, img_cur)
                             image_file_index += 1
@@ -428,18 +429,21 @@ def main():
                             rospy.loginfo("Metadata and Image saved")
                             rospy.loginfo("Num images captured: " + str(image_file_index))
 
+                            # update goal id
+                            goalID += 1
+                            num_images_captured += 1
 
 
 
-            # update goal id
-            goalID = (goalID + 1)%numGoals
-            position = positions[goalID]
+
+            # Send next position
+            position = node.sample_position(x_center, y_center, sample_max_radius, sample_min_radius)
             goal_x = position[0]
             goal_y = position[1]
             goal_theta = position[2]
 
             # exit if we have tried all positions
-            if goalID == 0:
+            if num_images_captured == desired_num_images:
                 rospy.loginfo("Total images captured: " + str(image_file_index))
                 return
 
