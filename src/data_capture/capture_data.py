@@ -226,7 +226,7 @@ def main():
     ar_tag_size = .142
     num_published_points = 4
     sample_min_radius = .5
-    sample_max_radius = 2.5
+    sample_max_radius = 2.0
     sample_height = .5
     height_offset = 1.0
     num_positions_to_sample = 50
@@ -349,11 +349,14 @@ def main():
                     rospy.loginfo("Spine adjustment succeeded")
 
                     # make robot look at object
+                    rospy.sleep(1)
                     rospy.loginfo("Turning head")
                     node.look_at("/map", x_center, y_center, z_center)
                     result = node.point_head_client.wait_for_result()
+                    rospy.loginfo(result)
 
-                    if result == g_status.SUCCEEDED:
+                    #if result.status == g_status.SUCCEEDED:
+                    if result == True:
 
                         rospy.loginfo("Head turn succeeded")
 
