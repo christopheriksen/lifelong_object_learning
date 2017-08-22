@@ -427,6 +427,7 @@ def main():
                                 f.write(str(point[1]) + "\n")
                             f.write(str(goal_x) + "\n")
                             f.write(str(goal_y) + "\n")
+                            f.write(str(position[3]) + "\n")        # spine height
                             f.close()
 
 
