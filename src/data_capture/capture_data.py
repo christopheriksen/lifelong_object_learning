@@ -102,9 +102,9 @@ class Node:
     #     self.torso_client.send_goal(goal)
 
     def move_torso(self, pose):
-	joint_names = ['l_wheel_joint', 'r_wheel_joint', 'torso_lift_joint', 'bellows_joint', 'head_pan_joint', 'head_tilt_joint', 'shoulder_pan_joint', 'shoulder_lift_joint', 'upperarm_roll_joint', 'elbow_flex_joint', 'forearm_roll_joint', 'wrist_flex_joint', 'wrist_roll_joint']
-        poses = [-5.670051574707031, 2.0671679973602295, 0.05210910737514496, 0.023, -0.00701981782913208, 0.28781361981140136, 1.3192424769714355, 1.4000714648620605, -0.20049656002880095, 1.5290160491638183, -0.0004613047506046297, 1.660243449769287, -0.00012475593825578626]
-        self.move_group.moveToJointPosition(["torso_lift_joint"], [pose], wait=False)   # plan
+	    joint_names = ['torso_lift_joint', 'shoulder_pan_joint', 'shoulder_lift_joint', 'upperarm_roll_joint', 'elbow_flex_joint', 'forearm_roll_joint', 'wrist_flex_joint', 'wrist_roll_joint']
+        poses = [pose, 1.3192424769714355, 1.4000714648620605, -0.20049656002880095, 1.5290160491638183, -0.0004613047506046297, 1.660243449769287, -0.00012475593825578626]
+        self.move_group.moveToJointPosition(joint_names, poses, wait=False)   # plan
         self.move_group.get_move_action().wait_for_result()
         result = self.move_group.get_move_action().get_result()
         return result
@@ -163,13 +163,16 @@ class Node:
         sampled_y = sampled_r*math.sin(sampled_theta)
         sampled_z = random.random()*(self.max_spine_height - self.min_spine_height) + self.min_spine_height
 
-        angle = math.atan2(x_center - sampled_x, y_center - sampled_y)
-        if angle > math.pi*2:
-            angle = angle - math.pi*2
-        if angle < 0:
-            angle = angle + math.pi*2
+        x_diff = sampled_x - x_center
+        y_diff = sampled_y - y_center
 
-        position = [sampled_x, sampled_y, angle, sampled_z]
+        theta = math.atan2(y_diff, x_diff) + math.pi
+        if theta > (2*math.pi):
+            theta = theta - (2*math.pi)
+        if theta < 0:
+            theta = theta + (2*math.pi)
+
+        position = [sampled_x, sampled_y, theta, sampled_z]
 
         return position
 
