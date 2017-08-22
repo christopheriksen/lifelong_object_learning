@@ -374,7 +374,7 @@ def main():
                             # find pixel coordinates of points of interest
                             # tl, tr, bl, br
                             # ref_points = [[-ar_tag_size/2.0,-ar_tag_size/2.0,0], [-ar_tag_size/2.0,ar_tag_size/2.0,0], [ar_tag_size/2.0,-ar_tag_size/2.0,0], [ar_tag_size/2.0,ar_tag_size/2.0,0]]
-                            ref_points = [node.published_points]
+                            ref_points = node.published_points
 
                             height, width, channels = img_cur.shape
 
