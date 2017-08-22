@@ -102,7 +102,7 @@ class Node:
     #     self.torso_client.send_goal(goal)
 
     def move_torso(self, pose):
-	    joint_names = ['torso_lift_joint', 'shoulder_pan_joint', 'shoulder_lift_joint', 'upperarm_roll_joint', 'elbow_flex_joint', 'forearm_roll_joint', 'wrist_flex_joint', 'wrist_roll_joint']
+        joint_names = ['torso_lift_joint', 'shoulder_pan_joint', 'shoulder_lift_joint', 'upperarm_roll_joint', 'elbow_flex_joint', 'forearm_roll_joint', 'wrist_flex_joint', 'wrist_roll_joint']
         poses = [pose, 1.3192424769714355, 1.4000714648620605, -0.20049656002880095, 1.5290160491638183, -0.0004613047506046297, 1.660243449769287, -0.00012475593825578626]
         self.move_group.moveToJointPosition(joint_names, poses, wait=False)   # plan
         self.move_group.get_move_action().wait_for_result()
