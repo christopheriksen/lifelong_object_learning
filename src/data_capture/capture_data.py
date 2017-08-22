@@ -382,9 +382,9 @@ def main():
                             points_to_write = []
                             for ref_point in ref_points:
                                 ps = PointStamped()
-                                ps.header.stamp = node.tf.getLatestCommonTime(camera_frame, map_frame)
+                                ps.header.frame_id = map_frame
+                                ps.header.stamp = node.tf.getLatestCommonTime(camera_frame, ps.header.frame_id)
                                 # ps.header.stamp = rospy.Time.now()
-                                ps.header.frame_id = ar_tag_frame
                                 ps.point.x = ref_point[0]
                                 ps.point.y = ref_point[1]
                                 ps.point.z = ref_point[2]
