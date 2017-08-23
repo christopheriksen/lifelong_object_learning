@@ -221,15 +221,16 @@ def main():
     published_point_base_topic = "/object_point"
     torso_movement_topic = "/torso_controller/follow_joint_trajectory"
     head_movement_topic = "/head_controller/point_head"
-    image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/images/"
-    image_data_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/metadata/"
+    image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/images/coffee_mug/coffee_mug_1/"
+    circle_image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/circle_images/coffee_mug/coffee_mug_1/"
+    image_data_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/metadata/coffee_mug/coffee_mug_1/"
     ar_tag_size = .142
     num_published_points = 4
-    sample_min_radius = .5
+    sample_min_radius = .4
     sample_max_radius = 2.0
     sample_height = .5
     height_offset = 1.0
-    num_positions_to_sample = 50
+    num_positions_to_sample = 100
     max_spine_height = .386
     min_spine_height = 0.00313
     #max_spine_height = .184
@@ -418,6 +419,7 @@ def main():
 
                             # save image along with pos annotations
                             image_file = image_filepath + str(image_file_index) + '.png'
+                            circle_image_file = circle_image_filepath + str(image_file_index) + '.png'
                             text_file = image_data_filepath + str(image_file_index) + '.txt'
                             f = open(text_file, 'w')
                             f.write(image_file + "\n")
@@ -432,9 +434,12 @@ def main():
 
 
 
+                            circle_img = img_cur
                             # visualize
                             for point in points_to_write:
-                               cv2.circle(img_cur, (point[0], point[1]), 2, (0, 0, 255), 3)
+                               cv2.circle(circle_img, (point[0], point[1]), 2, (0, 0, 255), 3)
+
+                            cv2.imwrite(image_file, circle_img)
 
                             cv2.imwrite(image_file, img_cur)
                             image_file_index += 1
