@@ -2,8 +2,8 @@
 
   <!-- robot localization and navigation -->
   <include file="$(find fetch_navigation)/launch/fetch_nav.launch">
-    <arg name="map_file" value="$(find lifelong_object_learning)/maps/graf_204.yaml"/>
-    <arg name="map_keepout_file" value="$(find lifelong_object_learning)/maps/graf_204_keepout.yaml"/>
+    <arg name="map_file" value="$(find lifelong_object_learning)/maps/graf_3rd_floor.yaml"/>
+    <arg name="map_keepout_file" value="$(find lifelong_object_learning)/maps/graf_3rd_floor_keepout.yaml"/>
     <arg name="use_keepout" value="true" />
   </include>
 
