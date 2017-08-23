@@ -383,7 +383,7 @@ def main():
                             points_to_write = []
                             for ref_point in ref_points:
                                 ps = PointStamped()
-                                ps.header.frame_id = map_frame
+                                ps.header.frame_id = ar_tag_frame
                                 ps.header.stamp = node.tf.getLatestCommonTime(camera_frame, ps.header.frame_id)
                                 # ps.header.stamp = rospy.Time.now()
                                 ps.point.x = ref_point[0]
@@ -434,12 +434,12 @@ def main():
 
 
 
-                            circle_img = img_cur.copy()
+                            circle_img = img_cur
                             # visualize
                             for point in points_to_write:
                                cv2.circle(circle_img, (point[0], point[1]), 2, (0, 0, 255), 3)
 
-                            cv2.imwrite(circle_image_file, circle_img)
+                            cv2.imwrite(image_file, circle_img)
 
                             cv2.imwrite(image_file, img_cur)
                             image_file_index += 1
