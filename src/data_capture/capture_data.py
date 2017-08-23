@@ -159,8 +159,8 @@ class Node:
 
         sampled_theta = random.random()*(2*math.pi)
         sampled_r = random.random()*(sample_max_radius - sample_min_radius) + sample_min_radius
-        sampled_x = sampled_r*math.cos(sampled_theta)
-        sampled_y = sampled_r*math.sin(sampled_theta)
+        sampled_x = sampled_r*math.cos(sampled_theta) + x_center
+        sampled_y = sampled_r*math.sin(sampled_theta) + y_center
         sampled_z = random.random()*(self.max_spine_height - self.min_spine_height) + self.min_spine_height
 
         x_diff = sampled_x - x_center
