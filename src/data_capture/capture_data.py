@@ -434,12 +434,12 @@ def main():
 
 
 
-                            circle_img = img_cur
+                            circle_img = img_cur.copy()
                             # visualize
                             for point in points_to_write:
                                cv2.circle(circle_img, (point[0], point[1]), 2, (0, 0, 255), 3)
 
-                            cv2.imwrite(image_file, circle_img)
+                            cv2.imwrite(circle_image_file, circle_img)
 
                             cv2.imwrite(image_file, img_cur)
                             image_file_index += 1
