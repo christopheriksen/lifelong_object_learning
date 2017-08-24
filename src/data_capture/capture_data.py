@@ -212,6 +212,8 @@ def main():
     # image_filepath = rospy.get_param('image_filepath')
     # num_published_points = rospy.get_param('num_published_points')
 
+    instance_name = "plate_1"
+
     image_topic = "/head_camera/rgb/image_rect_color"
     camera_info_topic = "/head_camera/rgb/camera_info"
     map_frame = "/map"
@@ -425,9 +427,9 @@ def main():
                             #             points_to_write[i][2] = dist
 
                             # save image along with pos annotations
-                            image_file = image_filepath + str(image_file_index) + '.png'
-                            circle_image_file = circle_image_filepath + str(image_file_index) + '.png'
-                            text_file = image_data_filepath + str(image_file_index) + '.txt'
+                            image_file = image_filepath + instance_name + str(image_file_index) + '.png'
+                            circle_image_file = circle_image_filepath + instance_name + str(image_file_index) + '.png'
+                            text_file = image_data_filepath + instance_name + str(image_file_index) + '.txt'
                             f = open(text_file, 'w')
                             f.write(image_file + "\n")
                             f.write(str(height) + "\t" + str(width) + "\n")
