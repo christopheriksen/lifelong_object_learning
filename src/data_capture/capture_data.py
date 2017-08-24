@@ -212,7 +212,7 @@ def main():
     # image_filepath = rospy.get_param('image_filepath')
     # num_published_points = rospy.get_param('num_published_points')
 
-    instance_name = "plate_1"
+    instance_name = ""
 
     image_topic = "/head_camera/rgb/image_rect_color"
     camera_info_topic = "/head_camera/rgb/camera_info"
@@ -238,14 +238,15 @@ def main():
     #max_spine_height = .184
     #min_spine_height = 0.0
     spine_offset = 0.0
-    starting_image_index = 0
+    starting_image_index = 89
     desired_num_images = 100
 
 
     node = Node(image_topic, camera_info_topic, camera_frame, published_point_num_topic, published_point_base_topic, torso_movement_topic, head_movement_topic, num_published_points,
         max_spine_height, min_spine_height, spine_offset)
 
-    rospy.loginfo("Got here 1")
+    count_pub = rospy.Publisher('data_capture_index', String, queue_size=10)
+
     camera_model = PinholeCameraModel()
     while node.camera_info is None:     # wait for camera info
         continue
@@ -301,8 +302,8 @@ def main():
 
 
     # send first goal
-    goalID = 0
-    num_images_captured = 0
+    goalID = starting_image_index
+    num_images_captured = starting_image_index
     #numGoals = len(positions)
     #position = positions[goalID]
     position = node.sample_position(x_center, y_center, sample_max_radius, sample_min_radius)
@@ -334,6 +335,7 @@ def main():
             #     return
                     
             # move to next position
+            count_pub.publish("New goal ID is " + str(goalID))
             rospy.loginfo("New goal ID is " + str(goalID))
             rospy.loginfo("Goal is " + str(goal_x) + " " + str(goal_y) + " " + str(goal_theta))
             rospy.loginfo("Sending goal")
@@ -475,6 +477,7 @@ def main():
                 return
 
             # move to next position
+            count_pub.publish("New goal ID is " + str(goalID))
             rospy.loginfo("New goal ID is " + str(goalID))
             rospy.loginfo("Goal is " + str(goal_x) + " " + str(goal_y) + " " + str(goal_theta))
             rospy.loginfo("Sending goal")
