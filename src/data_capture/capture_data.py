@@ -287,7 +287,7 @@ def main():
     # y_center = ps_new.point.y
     # z_center = ps_new.point.z
 
-    rospy.loginfo("points_center: " + str(x_center) + " " + str(y_center) + " " + str(z_center))
+    # rospy.loginfo("points_center: " + str(x_center) + " " + str(y_center) + " " + str(z_center))
 
     # rospy.loginfo("AR frame transformed to map frame")
 

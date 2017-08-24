@@ -226,8 +226,8 @@ def main():
     image_data_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/metadata/coffee_mug/coffee_mug_1/"
     ar_tag_size = .142
     num_published_points = 4
-    sample_min_radius = .4
-    sample_max_radius = 2.0
+    sample_min_radius = .8
+    sample_max_radius = 2.25
     sample_height = .5
     height_offset = 1.0
     num_positions_to_sample = 100
@@ -266,6 +266,10 @@ def main():
     y_center = y_center/node.num_published_points
     z_center = z_center/node.num_published_points
 
+    rospy.loginfo("x center: " + str(x_center))
+    rospy.loginfo("y center: " + str(y_center))
+    rospy.loginfo("z center: " + str(x_center))
+
     # ps = PointStamped()
     # ps.header.frame_id = ar_tag_frame
     # ps.point.x = x_center
@@ -283,7 +287,7 @@ def main():
     # y_center = ps_new.point.y
     # z_center = ps_new.point.z
 
-    rospy.loginfo("points_center: " + str(x_center) + " " + str(y_center) + " " + str(z_center))
+    # rospy.loginfo("points_center: " + str(x_center) + " " + str(y_center) + " " + str(z_center))
 
     # rospy.loginfo("AR frame transformed to map frame")
 
@@ -361,6 +365,8 @@ def main():
 
                         rospy.loginfo("Head turn succeeded")
 
+                        rospy.sleep(.1)
+
                     # if True:
 
                         # rospy.loginfo("Sitting still")
@@ -368,6 +374,7 @@ def main():
 
                         # capture and save image
                         img_cur = node.get_img()
+                        rospy.sleep(.1)
                         if (img_cur is not None) and (len(node.points_registered) == node.num_published_points):
 
                             rospy.loginfo("Capturing image")
