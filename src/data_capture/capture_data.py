@@ -221,12 +221,12 @@ def main():
     published_point_base_topic = "/object_point"
     torso_movement_topic = "/torso_controller/follow_joint_trajectory"
     head_movement_topic = "/head_controller/point_head"
-    image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/images/coffee_mug/coffee_mug_1/"
-    circle_image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/circle_images/coffee_mug/coffee_mug_1/"
-    image_data_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/metadata/coffee_mug/coffee_mug_1/"
+    image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/images/plate/plate_1/"
+    circle_image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/circle_images/plate/plate_1/"
+    image_data_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/metadata/plate/plate_1/"
     ar_tag_size = .142
     num_published_points = 4
-    sample_min_radius = .75
+    sample_min_radius = .8
     sample_max_radius = 2.25
     sample_height = .5
     height_offset = 1.0
