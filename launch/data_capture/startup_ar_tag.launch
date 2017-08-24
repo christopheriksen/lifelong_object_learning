@@ -1,7 +1,7 @@
 <launch>
 
   <!-- april tags -->
-  <include file=$(find lifelong_object_learning)/launch/april_tag_tracker.launch" />
+  <include file="$(find lifelong_object_learning)/launch/data_capture/april_tag_tracker.launch" />
 
   <!-- robot localization and navigation -->
   <include file="$(find fetch_navigation)/launch/fetch_nav.launch">
