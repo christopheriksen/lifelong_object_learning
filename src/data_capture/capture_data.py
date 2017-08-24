@@ -226,8 +226,8 @@ def main():
     image_data_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/metadata/coffee_mug/coffee_mug_1/"
     ar_tag_size = .142
     num_published_points = 4
-    sample_min_radius = .4
-    sample_max_radius = 2.0
+    sample_min_radius = .75
+    sample_max_radius = 2.25
     sample_height = .5
     height_offset = 1.0
     num_positions_to_sample = 100
@@ -265,6 +265,10 @@ def main():
     x_center = x_center/node.num_published_points
     y_center = y_center/node.num_published_points
     z_center = z_center/node.num_published_points
+    
+    rospy.loginfo("x center: " + str(x_center))
+    rospy.loginfo("y center: " + str(y_center))
+    rospy.loginfo("z center: " + str(x_center))
 
     # ps = PointStamped()
     # ps.header.frame_id = ar_tag_frame
