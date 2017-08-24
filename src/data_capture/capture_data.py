@@ -361,6 +361,8 @@ def main():
 
                         rospy.loginfo("Head turn succeeded")
 
+                        rospy.sleep(.1)
+
                     # if True:
 
                         # rospy.loginfo("Sitting still")
@@ -368,6 +370,7 @@ def main():
 
                         # capture and save image
                         img_cur = node.get_img()
+                        rospy.sleep(.1)
                         if (img_cur is not None) and (len(node.points_registered) == node.num_published_points):
 
                             rospy.loginfo("Capturing image")
