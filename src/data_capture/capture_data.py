@@ -212,7 +212,8 @@ def main():
     # image_filepath = rospy.get_param('image_filepath')
     # num_published_points = rospy.get_param('num_published_points')
 
-    instance_name = ""
+    class_name = "calculator"
+    instance_name = "calculator_1"
 
     image_topic = "/head_camera/rgb/image_rect_color"
     camera_info_topic = "/head_camera/rgb/camera_info"
@@ -223,9 +224,9 @@ def main():
     published_point_base_topic = "/object_point"
     torso_movement_topic = "/torso_controller/follow_joint_trajectory"
     head_movement_topic = "/head_controller/point_head"
-    image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/images/plate/plate_1/"
-    circle_image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/circle_images/plate/plate_1/"
-    image_data_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/metadata/plate/plate_1/"
+    image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/" + class_name + "/" + instance_name +"/images/"
+    circle_image_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/" + class_name + "/" + instance_name + "/circle_images/"
+    image_data_filepath = "/home/eriksenc/research_ws/src/lifelong_object_learning/data/captured/" + class_name + "/" + instance_name + "/metadata/"
     ar_tag_size = .142
     num_published_points = 4
     sample_min_radius = .8
@@ -238,7 +239,7 @@ def main():
     #max_spine_height = .184
     #min_spine_height = 0.0
     spine_offset = 0.0
-    starting_image_index = 89
+    starting_image_index = 0
     desired_num_images = 100
 
 
@@ -429,9 +430,9 @@ def main():
                             #             points_to_write[i][2] = dist
 
                             # save image along with pos annotations
-                            image_file = image_filepath + instance_name + str(image_file_index) + '.png'
-                            circle_image_file = circle_image_filepath + instance_name + str(image_file_index) + '.png'
-                            text_file = image_data_filepath + instance_name + str(image_file_index) + '.txt'
+                            image_file = image_filepath + instance_name + "_" + str(image_file_index) + '.png'
+                            circle_image_file = circle_image_filepath + instance_name + "_" + str(image_file_index) + '.png'
+                            text_file = image_data_filepath + instance_name + "_" + str(image_file_index) + '.txt'
                             f = open(text_file, 'w')
                             f.write(image_file + "\n")
                             f.write(str(height) + "\t" + str(width) + "\n")
