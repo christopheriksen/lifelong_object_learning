@@ -212,8 +212,8 @@ def main():
     # image_filepath = rospy.get_param('image_filepath')
     # num_published_points = rospy.get_param('num_published_points')
 
-    class_name = "calculator"
-    instance_name = "calculator_1"
+    class_name = "notebook"
+    instance_name = "notebook_1"
 
     image_topic = "/head_camera/rgb/image_rect_color"
     camera_info_topic = "/head_camera/rgb/camera_info"
