@@ -16,7 +16,9 @@ from keras import backend as K
 from keras.utils.layer_utils import convert_all_kernels_in_model
 from keras.utils.data_utils import get_file
 
-from keras.preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
+
+from os import listdir
 
 #########################################################################################
 # Implements the Inception Network v4 (http://arxiv.org/pdf/1602.07261v1.pdf) in Keras. #
@@ -302,12 +304,17 @@ def create_model(num_classes=1001, dropout_prob=0.2, weights=None, include_top=T
 
 if __name__ == '__main__':
 
-    model = create_model(num_classes=5, weights='imagenet')
-    train_data_dir = '/home/morgul/data_gatherer/src/data_collector/data/ETU/train'
-    validation_data_dir = '/home/morgul/data_gatherer/src/data_collector/data/ETU/val'
-    batch_size = 32
+    model = create_model(num_classes=2, weights='imagenet')
+    train_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/demo/train'
+    validation_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/demo/val'
+    test_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/demo/test/'
+    model_save_path = '/home/scatha/research_ws/src/lifelong_object_learning/model_weights/'
+    model_save_name = 'base_weights.h5'
+    # batch_size = 32
     img_height = 299
     img_width = 299
+
+    batch_size = 16
 
     # prepare data augmentation configuration
     train_datagen = ImageDataGenerator(
@@ -336,9 +343,13 @@ if __name__ == '__main__':
     # model.evaluate(test_X, test_Y, batch_size=32, verbose=1, sample_weight=None)
 
 
-    nb_train_samples = 3000
-    epochs = 50
-    nb_validation_samples = 1000
+    # nb_train_samples = 3000
+    # epochs = 50
+    # nb_validation_samples = 1000
+
+    nb_train_samples = 60
+    epochs = 3
+    nb_validation_samples = 20
 
     # fine-tune the model
     model.fit_generator(
@@ -348,7 +359,22 @@ if __name__ == '__main__':
         validation_data=validation_generator,
         validation_steps=nb_validation_samples // batch_size)
 
-    model.save_weights('base_weights.h5')
+    model.save_weights(model_save_path + model_save_name)
+
+
+    # predictions on test data
+    test_X = []
+    for filename in listdir(test_data_dir):
+        img = load_img(test_data_dir + filename, target_size=(299, 299))
+        x = img_to_array(img)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x[0])
+        test_X.append(x)
+    test_X = np.array(test_X)
+
+    predicted_vals = model.predict(test_X, batch_size=1, verbose=0)
+    for predicted_val in predicted_vals:
+        print predicted_val
 
 
     # model.fit(X, Y, batch_size=32, nb_epoch=10, verbose=1, validation_split=0.0, validation_data=None, shuffle=True, class_weight=None, sample_weight=None, initial_epoch=0)
