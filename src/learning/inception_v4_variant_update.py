@@ -300,15 +300,15 @@ def inception_v4(num_classes, dropout_keep_prob, weights, include_top, weights_p
     return model
 
 
-def create_model(num_classes=1001, dropout_prob=0.2, weights=None, include_top=True, weights_path):
+def create_model(weights_path, num_classes=1001, dropout_prob=0.2, weights=None, include_top=True):
     return inception_v4(num_classes, dropout_prob, weights, include_top, weights_path)
 
 
 if __name__ == '__main__':
 
     num_classes = 6
-    train_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/scraped/train'
-    validation_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/scraped/val'
+    train_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/rgbd-dataset/train'
+    validation_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/rgbd-dataset/train'
     test_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/demo/test/'
     model_save_path = '/home/scatha/research_ws/src/lifelong_object_learning/model_weights/'
     model_save_name = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features_update_rgbd.h5'
@@ -319,7 +319,7 @@ if __name__ == '__main__':
     weights_in = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features.h5'
     weights_path = weights_in_path + weights_in
 
-    model = create_model(num_classes=num_classes, weights='imagenet', weights_path=weights_path)
+    model = create_model(weights_path=weights_path, num_classes=num_classes, weights='imagenet')
 
     # batch_size = 16
 
