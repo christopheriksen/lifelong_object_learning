@@ -10,8 +10,8 @@ def main():
 	api_secret = "11f47dbb08f23075"
 
 	# query_strings = ["chair", "backpack", "officechair", "mug", "computerkeyboard"]
-	query = "chair"
-	local_path = "/home/morgul/data_gatherer/src/data_collector/data/scraped/"
+	query = "computerkeyboard"
+	local_path = "/home/morgul/research_ws/src/lifelong_object_learning/data/scraped/"
 	out_file = open(local_path + query + '.txt','w')
 	num_iters = 1
 
