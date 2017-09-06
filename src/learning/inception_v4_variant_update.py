@@ -28,11 +28,11 @@ WEIGHTS_PATH = 'https://github.com/kentsommer/keras-inceptionV4/releases/downloa
 WEIGHTS_PATH_NO_TOP = 'https://github.com/kentsommer/keras-inceptionV4/releases/download/2.1/inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5'
 
 
-# def preprocess_input(x):
-#     x = np.divide(x, 255.0)
-#     x = np.subtract(x, 0.5)
-#     x = np.multiply(x, 2.0)
-#     return x
+def preprocess_input(x):
+    x = np.divide(x, 255.0)
+    x = np.subtract(x, 0.5)
+    x = np.multiply(x, 2.0)
+    return x
 
 
 def conv2d_bn(x, nb_filter, num_row, num_col,
@@ -227,7 +227,7 @@ def inception_v4_base(input):
     return net
 
 
-def inception_v4(num_classes, dropout_keep_prob, weights, include_top):
+def inception_v4(num_classes, dropout_keep_prob, weights, include_top, weights_path):
     '''
     Creates the inception v4 network
     Args:
@@ -260,6 +260,14 @@ def inception_v4(num_classes, dropout_keep_prob, weights, include_top):
 
     model = Model(inputs, x, name='inception_v4')
 
+        # pop off last layer and add num_classes classification layer
+    model.layers.pop()
+    for layer in model.layers:
+        layer.trainable = False
+    x = Dense(num_classes, activation='softmax', name='predictions')(model.layers[-1].output)
+    x.trainable = True
+    model = Model(inputs, x)
+
     # load weights
     if weights == 'imagenet':
         if K.image_data_format() == 'channels_first':
@@ -272,52 +280,50 @@ def inception_v4(num_classes, dropout_keep_prob, weights, include_top):
                               '`image_data_format="channels_last"` in '
                               'your Keras config '
                               'at ~/.keras/keras.json.')
-        if include_top:
-            weights_path = get_file(
-                'inception-v4_weights_tf_dim_ordering_tf_kernels.h5',
-                WEIGHTS_PATH,
-                cache_subdir='models',
-                md5_hash='9fe79d77f793fe874470d84ca6ba4a3b')
-        else:
-            weights_path = get_file(
-                'inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5',
-                WEIGHTS_PATH_NO_TOP,
-                cache_subdir='models',
-                md5_hash='9296b46b5971573064d12e4669110969')
+        # if include_top:
+        #     weights_path = get_file(
+        #         'inception-v4_weights_tf_dim_ordering_tf_kernels.h5',
+        #         WEIGHTS_PATH,
+        #         cache_subdir='models',
+        #         md5_hash='9fe79d77f793fe874470d84ca6ba4a3b')
+        # else:
+        #     weights_path = get_file(
+        #         'inception-v4_weights_tf_dim_ordering_tf_kernels_notop.h5',
+        #         WEIGHTS_PATH_NO_TOP,
+        #         cache_subdir='models',
+        #         md5_hash='9296b46b5971573064d12e4669110969')
         model.load_weights(weights_path, by_name=True)
 
 
-    # pop off last layer and add num_classes classification layer
-    model.layers.pop()
-    for layer in model.layers:
-        layer.trainable = False
-    x = Dense(num_classes, activation='softmax', name='predictions')(model.layers[-1].output)
-    x.trainable = True
-    model = Model(inputs, x)
+
 
     return model
 
 
-def create_model(num_classes=1001, dropout_prob=0.2, weights=None, include_top=True):
-    return inception_v4(num_classes, dropout_prob, weights, include_top)
+def create_model(num_classes=1001, dropout_prob=0.2, weights=None, include_top=True, weights_path):
+    return inception_v4(num_classes, dropout_prob, weights, include_top, weights_path)
 
 
 if __name__ == '__main__':
 
     num_classes = 6
-    model = create_model(num_classes=num_classes, weights='imagenet')
     train_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/scraped/train'
-    validation_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/scraped/train'
+    validation_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/scraped/val'
     test_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/demo/test/'
     model_save_path = '/home/scatha/research_ws/src/lifelong_object_learning/model_weights/'
-    model_save_name = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features.h5'
+    model_save_name = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features_update_rgbd.h5'
     batch_size = 32
     img_height = 299
     img_width = 299
+    weights_in_path = '/home/scatha/research_ws/src/lifelong_object_learning/model_weights/'
+    weights_in = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features.h5'
+    weights_path = weights_in_path + weights_in
+
+    model = create_model(num_classes=num_classes, weights='imagenet', weights_path=weights_path)
 
     # batch_size = 16
 
-    # prepare data augmentation configuration
+    # prepare data augmentation configuration       ## FUTURE: more data augmentation?
     train_datagen = ImageDataGenerator(
             # rescale=1./255,
             rotation_range=20,
@@ -351,9 +357,10 @@ if __name__ == '__main__':
     # epochs = 50
     # nb_validation_samples = 1000
 
-    nb_train_samples = 6000         # 1000*num_classes
+    # nb_train_samples = 4800         # 800*num_classes
+    nb_train_samples = 14782
     epochs = 50
-    # nb_validation_samples = 6000    # 1000*num_classes
+    # nb_validation_samples = 1200    # 200*num_classes
 
     # fine-tune the model
     model.fit_generator(
