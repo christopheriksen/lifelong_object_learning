@@ -7,12 +7,15 @@ import cv2
 
 def main():
 
+    window_scaling = 2.0
+    object_class = "bowl"
+    object_instance = "1"
 
-    text_file_path = "/home/morgul/data_gatherer/src/data_collector/data/collected/metadata/"
-    image_file_path = "/home/morgul/data_gatherer/src/data_collector/data/collected/images/"
-    save_text_file_path = "/home/morgul/data_gatherer/src/data_collector/data/segmented/train/metadata/doorhandle/"
-    save_image_path = "/home/morgul/data_gatherer/src/data_collector/data/segmented/train/images/doorhandle/"
-    desired_img_size = 64
+    text_file_path = "/home/scatha/research_ws/src/lifelong_object_learning/data/captured/" + object_class + "/" + object_class + "_" + object_instance + "/metadata/"
+    image_file_path = "/home/scatha/research_ws/src/lifelong_object_learning/data/captured/" + object_class + "/" + object_class + "_" + object_instance + "/images/"
+    save_text_file_path = "/home/scatha/research_ws/src/lifelong_object_learning/data/captured/bowl/images/"
+    save_image_path = "/home/scatha/research_ws/src/lifelong_object_learning/data/captured/bowl/images/"
+    desired_img_size = 299
 
     index = -1
 
@@ -33,13 +36,13 @@ def main():
         height = int(image_size[0])
         width = int(image_size[1])
 
-        ar_tag_points = []
-        for line in lines[2:6]:
-            vals = line.split()
-            ar_tag_points.append((int(vals[1]), int(vals[0])))
+        # ar_tag_points = []
+        # for line in lines[2:6]:
+        #     vals = line.split()
+        #     ar_tag_points.append((int(vals[1]), int(vals[0])))
 
         object_points = []
-        for line in lines[6:10]:
+        for line in lines[2:6]:
             vals = line.split()
             object_points.append((int(vals[1]), int(vals[0])))
 
@@ -88,6 +91,7 @@ def main():
         # tr = (object_center_x + window_size/2, object_center_y - window_size/2)
         # bl = (object_center_x - window_size/2, object_center_y + window_size/2)
         # br = (object_center_x + window_size/2, object_center_y + window_size/2)
+        max_window_size = window_scaling*max((object_max_x - object_min_x), (object_max_y - object_min_y))
 
         left_bound = object_center_x - window_size/2
         right_bound = object_center_x + window_size/2
@@ -102,13 +106,14 @@ def main():
 
 
             # if ar_tag appears in image throw out
-            ar_tag_points_in_img = 0
-            for point in ar_tag_points:
-                if ((point[0] >= top_bound-1) and (point[0] <= bottom_bound+1)) and ((point[1] >= left_bound-1) and (point[1] <= right_bound+1)):
-                    ar_tag_points_in_img += 1
+            # ar_tag_points_in_img = 0
+            # for point in ar_tag_points:
+            #     if ((point[0] >= top_bound-1) and (point[0] <= bottom_bound+1)) and ((point[1] >= left_bound-1) and (point[1] <= right_bound+1)):
+            #         ar_tag_points_in_img += 1
 
-            if ar_tag_points_in_img > 0:
-                break
+            # if ar_tag_points_in_img > 0:
+            #     break
+
 
             # bounds check
             if top_bound-1 <= 0:
@@ -120,6 +125,12 @@ def main():
             if right_bound+1 >= width:
                 break
 
+            # stop if max window size is reached
+            if (right_bound - left_bound) >= max_window_size:
+                break
+            if (bottom_bound - top_bound) >= max_window_size:
+                break
+
             left_bound -= 1
             right_bound += 1
             top_bound -= 1
@@ -127,17 +138,17 @@ def main():
 
         sub_image = image[top_bound:bottom_bound, left_bound:right_bound]
 
-        resized_image = cv2.resize(sub_image, (desired_img_size, desired_img_size)) 
+        # resized_image = cv2.resize(sub_image, (desired_img_size, desired_img_size)) 
 
 
 
 
         image_filename = save_image_path + file_base +".png"
-        text_filename = save_text_file_path + file_base +".txt"
+        # text_filename = save_text_file_path + file_base +".txt"
 
-        f = open(text_filename, 'w')     # FIXME: integration
-        f.write(image_filename + "\t" + str(x_pose) + "\t" + str(y_pose) + "\n")
-        f.close()
+        # f = open(text_filename, 'w')     # FIXME: integration
+        # f.write(image_filename + "\t" + str(x_pose) + "\t" + str(y_pose) + "\n")
+        # f.close()
 
         cv2.imwrite(image_filename, sub_image)
 
