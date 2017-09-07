@@ -17,6 +17,7 @@ from keras.utils.layer_utils import convert_all_kernels_in_model
 from keras.utils.data_utils import get_file
 
 from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
+from keras.callbacks import EarlyStopping, History
 
 from os import listdir
 
@@ -333,7 +334,7 @@ if __name__ == '__main__':
             zoom_range=0.2,
             horizontal_flip=True)
 
-    # test_datagen = ImageDataGenerator() #rescale=1./255)
+    test_datagen = ImageDataGenerator() #rescale=1./255)
 
     train_generator = train_datagen.flow_from_directory(
             train_data_dir,
@@ -341,11 +342,11 @@ if __name__ == '__main__':
             batch_size=batch_size,
             class_mode='categorical')
 
-    # validation_generator = test_datagen.flow_from_directory(
-    #         validation_data_dir,
-    #         target_size=(img_height, img_width),
-    #         batch_size=batch_size,
-    #         class_mode='categorical')
+    validation_generator = test_datagen.flow_from_directory(
+            validation_data_dir,
+            target_size=(img_height, img_width),
+            batch_size=batch_size,
+            class_mode='categorical')
 
 
     model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'], loss_weights=None, sample_weight_mode=None)
@@ -361,14 +362,16 @@ if __name__ == '__main__':
     nb_train_samples = 14782
     epochs = 50
     # nb_validation_samples = 1200    # 200*num_classes
+    nb_validation_samples = 14782
 
     # fine-tune the model
     model.fit_generator(
         train_generator,
         steps_per_epoch=nb_train_samples // batch_size,
-        epochs=epochs)
-        # validation_data=validation_generator,
-        # validation_steps=nb_validation_samples // batch_size)
+        epochs=epochs,
+        callbacks=[EarlyStopping(), History()],
+        validation_data=validation_generator,
+        validation_steps=nb_validation_samples // batch_size)
 
     model.save_weights(model_save_path + model_save_name)
 
