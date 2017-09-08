@@ -37,6 +37,10 @@ test_sizes = [3000,
               3812]
 
 
+# stats
+total_metrics = []
+training_time = []
+total_num_images = 0
 
 # load model
 model = create_model(weights_path=weights_path, num_classes=num_classes, weights='imagenet')
@@ -143,6 +147,7 @@ while len(instance_list) != 0:
                 batch_size=batch_size,
                 class_mode='categorical')
 
+        t0 = time.time()
         model.fit_generator(
             train_generator,
             steps_per_epoch=nb_train_samples // batch_size,
@@ -150,6 +155,10 @@ while len(instance_list) != 0:
             callbacks=[EarlyStopping(monitor='val_loss', min_delta=0, patience=2, verbose=0, mode='auto'), History()],
             validation_data=validation_generator,
             validation_steps=nb_validation_samples // batch_size)
+
+        training_time.append(time.time() - t0)
+        total_num_images += 1
+        
 
         # model.save_weights(model_save_path + model_save_name)
 
@@ -171,7 +180,8 @@ while len(instance_list) != 0:
 
         ### also keep track of stats
 
-        # test set performance after each training instance
+        # test set performance after each training instance view
+        view_metrics = []
         for i in range(len(testing_dirs)):
             test_datagen = test_datagens[i]
             testing_dir = testing_dirs[i]
@@ -186,10 +196,8 @@ while len(instance_list) != 0:
             metrics = model.evaluate_generator(
                 testing_generator,
                 steps=test_size/batch_size)
-
-        # time taken to train each model
-
-        # num images stored
+            view_metrics.append(metrics)
+        total_metrics.append(view_metrics)
 
 model.save_weights(model_save_path + model_save_name)
 
