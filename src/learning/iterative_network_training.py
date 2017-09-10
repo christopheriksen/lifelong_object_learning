@@ -1,14 +1,43 @@
+import numpy as np
+
+# Sys
+import warnings
+# Keras Core
+from keras.layers.convolutional import MaxPooling2D, Convolution2D, AveragePooling2D
+from keras.layers import Input, Dropout, Dense, Flatten, Activation
+from keras.layers.normalization import BatchNormalization
+from keras.layers.merge import concatenate
+from keras import regularizers
+from keras import initializers
+from keras.models import Model
+# Backend
+from keras import backend as K
+# Utils
+from keras.utils.layer_utils import convert_all_kernels_in_model
+from keras.utils.data_utils import get_file
+
+from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
+from keras.callbacks import EarlyStopping, History
+
+from os import listdir
+
+
+
+from inception_v4_variant_update import *
 import sets
 import random
 import numpy as np
 import time
+import pickle
+import copy
+import cv2
 
 num_classes = 6
 train_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/rgbd-dataset/train'
 validation_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/rgbd-dataset/train'
 test_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/demo/test/'
 model_save_path = '/home/scatha/research_ws/src/lifelong_object_learning/model_weights/'
-model_save_name = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features_update_rgbd_no_early_stopping.h5'
+model_save_name = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features_update_captured_random.h5'
 batch_size = 32
 img_height = 299
 img_width = 299
@@ -23,6 +52,8 @@ num_instances = 4
 num_instance_images = 100
 epochs = 50
 patience = 0
+pickle_filepath = '/home/scatha/research_ws/src/lifelong_object_learning/results/'
+pickle_filename = 'random_pickle.p'
 
 nb_train_samples = 0
 nb_validation_samples = 0
@@ -41,6 +72,7 @@ test_sizes = [3000,
 total_metrics = []
 training_time = []
 total_num_images = 0
+instances_seen = []
 
 # load model
 model = create_model(weights_path=weights_path, num_classes=num_classes, weights='imagenet')
@@ -73,17 +105,22 @@ for object_class in object_classes:
 
 while len(instance_list) != 0:
 
-    # sequential selection
-    instance = instance_list[0]
-    instance_list.remove(instance)
+    # # sequential selection
+    # instance = instance_list[0]
+    # instance_list.remove(instance)
 
     # random selection
-    rand_index = random.randint(a, len(instance_list)-1)
+    rand_index = random.randint(0, len(instance_list)-1)
     instance = instance_list[rand_index]
     instance_list.remove(instance)
+    print "total num images: " + str(total_num_images)
+    print "num instances seen: " + str(len(instances_seen))
+    print "instance: " + instance
+    instances_seen.append(instance)
 
     object_class = instance[:-2]
-    for i in object_classes:
+    object_class_index = -1
+    for i in range(len(object_classes)):
         if object_class == object_classes[i]:
             object_class_index = i
     instance_img_dir = captured_images_path + object_class + "/" + instance + "/images/"
@@ -95,11 +132,12 @@ while len(instance_list) != 0:
     for filename in instance_filenames:
         img = load_img(instance_img_dir + filename, target_size=(299, 299))
         x = img_to_array(img)
-        x = np.expand_dims(x, axis=0)
+        # x = np.expand_dims(x, axis=0)
         # x = preprocess_input(x[0])
         instance_imgs.append(x)
     instance_imgs = np.array(instance_imgs)
-    reduced_instance_imgs = np.copy.deepcopy(instance_imgs)
+    x = np.expand_dims(x, axis=0)
+    reduced_instance_imgs = copy.deepcopy(instance_imgs)
 
 
 
@@ -126,7 +164,7 @@ while len(instance_list) != 0:
         new_filename = training_dir + object_class + "/" + instance_filename
         img = cv2.imread(instance_img_dir + instance_filename,cv2.IMREAD_UNCHANGED)
         cv2.imwrite(new_filename,img)
-        while cv2.imread(new_filename) == None:
+        while cv2.imread(new_filename) is None:
             time.sleep(.01)
 
         nb_train_samples += 1
@@ -150,11 +188,11 @@ while len(instance_list) != 0:
         t0 = time.time()
         model.fit_generator(
             train_generator,
-            steps_per_epoch=nb_train_samples // batch_size,
+            steps_per_epoch=max(nb_train_samples // batch_size, 1),
             epochs=epochs,
             callbacks=[EarlyStopping(monitor='val_loss', min_delta=0, patience=2, verbose=0, mode='auto'), History()],
             validation_data=validation_generator,
-            validation_steps=nb_validation_samples // batch_size)
+            validation_steps=max(nb_validation_samples // batch_size, 1))
 
         training_time.append(time.time() - t0)
         total_num_images += 1
@@ -195,12 +233,20 @@ while len(instance_list) != 0:
 
             metrics = model.evaluate_generator(
                 testing_generator,
-                steps=test_size/batch_size)
+                steps=test_size//batch_size)
             view_metrics.append(metrics)
+            print metrics
         total_metrics.append(view_metrics)
+
 
 model.save_weights(model_save_path + model_save_name)
 
+p_list = [total_num_images, training_time, total_metrics]
+pickle.dump(p_list, open( pickle_filepath + pickle_filename, "w"))
+
+print "instances seen: "
+for instance in instances_seen:
+    print instance
 
 
 
