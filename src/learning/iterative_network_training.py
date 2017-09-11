@@ -157,7 +157,7 @@ while len(instance_list) != 0:
                 min_index = index
 
         instance_filename = instance_filenames[min_index]
-        np.delete(reduced_instance_imgs, min_index)
+        reduced_instance_imgs = np.delete(reduced_instance_imgs, min_index, axis=0)
         instance_filenames.remove(instance_filename)
 
         ## add least confident image to training set
