@@ -305,14 +305,14 @@ def create_model(weights_path, num_classes=1001, dropout_prob=0.2, weights=None,
     return inception_v4(num_classes, dropout_prob, weights, include_top, weights_path)
 
 
-if __name__ == '__main__':
+def main():
 
     num_classes = 6
     train_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/rgbd-dataset/train'
     validation_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/rgbd-dataset/train'
     test_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/demo/test/'
     model_save_path = '/home/scatha/research_ws/src/lifelong_object_learning/model_weights/'
-    model_save_name = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features_update_rgbd.h5'
+    model_save_name = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features_update_rgbd_no_early_stopping.h5'
     batch_size = 32
     img_height = 299
     img_width = 299
@@ -369,7 +369,7 @@ if __name__ == '__main__':
         train_generator,
         steps_per_epoch=nb_train_samples // batch_size,
         epochs=epochs,
-        callbacks=[EarlyStopping(), History()],
+        # callbacks=[EarlyStopping(monitor='val_loss', min_delta=0, patience=4, verbose=0, mode='auto'), History()],
         validation_data=validation_generator,
         validation_steps=nb_validation_samples // batch_size)
 
@@ -428,3 +428,7 @@ if __name__ == '__main__':
     # print("Num misclassifications: " + str(misclassifications))
     # print("Accuracy: " + str(accuracy))
     # print ("Num locations messed up: " + str(len(poses)))
+
+
+if __name__ == '__main__':
+    main()

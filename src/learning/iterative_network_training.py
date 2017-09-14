@@ -37,7 +37,7 @@ train_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/tra
 validation_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/training_data/rgbd-dataset/train'
 test_data_dir = '/home/scatha/research_ws/src/lifelong_object_learning/data/demo/test/'
 model_save_path = '/home/scatha/research_ws/src/lifelong_object_learning/model_weights/'
-model_save_name = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features_update_captured_random.h5'
+model_save_name = 'inception_v4_flickr_base_weights_b32_e50_tr100_fixed_imgnet_features_update_captured_random_order_random_selection_patience_2_v2.h5'
 batch_size = 32
 img_height = 299
 img_width = 299
@@ -51,9 +51,9 @@ object_classes = ["bowl", "calculator", "cell_phone", "coffee_mug", "notebook", 
 num_instances = 4
 num_instance_images = 100
 epochs = 50
-patience = 0
+patience = 2
 pickle_filepath = '/home/scatha/research_ws/src/lifelong_object_learning/results/'
-pickle_filename = 'random_pickle.p'
+# pickle_filename = 'random_order_patience_4_pickle.p'
 
 nb_train_samples = 0
 nb_validation_samples = 0
@@ -73,6 +73,8 @@ total_metrics = []
 training_time = []
 total_num_images = 0
 instances_seen = []
+total_train_time = 0.0
+train_time = 0.0
 
 # load model
 model = create_model(weights_path=weights_path, num_classes=num_classes, weights='imagenet')
@@ -105,13 +107,14 @@ for object_class in object_classes:
 
 while len(instance_list) != 0:
 
-    # # sequential selection
+    # # sequential order
     # instance = instance_list[0]
-    # instance_list.remove(instance)
 
-    # random selection
+    # random order
     rand_index = random.randint(0, len(instance_list)-1)
     instance = instance_list[rand_index]
+
+
     instance_list.remove(instance)
     print "total num images: " + str(total_num_images)
     print "num instances seen: " + str(len(instances_seen))
@@ -146,15 +149,19 @@ while len(instance_list) != 0:
     improving = True
     while improving == True:
 
-        # find most uncertain image
+        # # find most uncertain image
         predicted_vals = model.predict(reduced_instance_imgs, batch_size=1, verbose=0)
-        min_confidence = float("inf")
-        min_index = None
-        for index in range(len(predicted_vals)):
-            confidence = predicted_vals[index][object_class_index]
-            if confidence < min_confidence:
-                min_confidence = confidence
-                min_index = index
+        # min_confidence = float("inf")
+        # min_index = None
+        # for index in range(len(predicted_vals)):
+        #     confidence = predicted_vals[index][object_class_index]
+        #     if confidence < min_confidence:
+        #         min_confidence = confidence
+        #         min_index = index
+
+        # random selection
+        rand_index = random.randint(0, len(predicted_vals)-1)
+        min_index = rand_index
 
         instance_filename = instance_filenames[min_index]
         reduced_instance_imgs = np.delete(reduced_instance_imgs, min_index, axis=0)
@@ -173,6 +180,7 @@ while len(instance_list) != 0:
         # batch_size=min(batch_size,nb_train_samples)
 
         # retrain model
+        t0 = time.time()
         train_generator = train_datagen.flow_from_directory(
             training_dir,
             target_size=(img_height, img_width),
@@ -185,7 +193,6 @@ while len(instance_list) != 0:
                 batch_size=batch_size,
                 class_mode='categorical')
 
-        t0 = time.time()
         model.fit_generator(
             train_generator,
             steps_per_epoch=max(nb_train_samples // batch_size, 1),
@@ -194,8 +201,10 @@ while len(instance_list) != 0:
             validation_data=validation_generator,
             validation_steps=max(nb_validation_samples // batch_size, 1))
 
-        training_time.append(time.time() - t0)
+        train_time = time.time() - t0
+        training_time.append(train_time)
         total_num_images += 1
+        total_train_time += train_time
         
 
         # model.save_weights(model_save_path + model_save_name)
@@ -219,30 +228,35 @@ while len(instance_list) != 0:
         ### also keep track of stats
 
         # test set performance after each training instance view
-        view_metrics = []
-        for i in range(len(testing_dirs)):
-            test_datagen = test_datagens[i]
-            testing_dir = testing_dirs[i]
-            test_size = test_sizes[i]
+        # view_metrics = []
+        # for i in range(len(testing_dirs)):
+        #     test_datagen = test_datagens[i]
+        #     testing_dir = testing_dirs[i]
+        #     test_size = test_sizes[i]
 
-            testing_generator = test_datagen.flow_from_directory(
-                testing_dir,
-                target_size=(img_height, img_width),
-                batch_size=batch_size,
-                class_mode='categorical')
+        #     testing_generator = test_datagen.flow_from_directory(
+        #         testing_dir,
+        #         target_size=(img_height, img_width),
+        #         batch_size=batch_size,
+        #         class_mode='categorical')
 
-            metrics = model.evaluate_generator(
-                testing_generator,
-                steps=test_size//batch_size)
-            view_metrics.append(metrics)
-            print metrics
-        total_metrics.append(view_metrics)
+        #     metrics = model.evaluate_generator(
+        #         testing_generator,
+        #         steps=test_size//batch_size)
+        #     view_metrics.append(metrics)
+        #     print metrics
+        # total_metrics.append(view_metrics)
 
 
 model.save_weights(model_save_path + model_save_name)
 
-p_list = [total_num_images, training_time, total_metrics]
-pickle.dump(p_list, open( pickle_filepath + pickle_filename, "w"))
+# p_list = [total_num_images, training_time, total_metrics]
+# pickle.dump(p_list, open( pickle_filepath + pickle_filename, "w"))
+
+print "total num images: " + str(total_num_images)
+print "final train time: " + str(train_time)
+print "total train time: " + str(total_train_time)
+print "ave train time: " + str(total_train_time/total_num_images)
 
 print "instances seen: "
 for instance in instances_seen:
